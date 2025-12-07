@@ -1,0 +1,528 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cyberpunk Portfolio</title>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- React and ReactDOM -->
+    <script crossorigin src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    
+    <!-- Babel for JSX -->
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    
+    <!-- Google Fonts: Orbitron for headers, Share Tech Mono for body -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap" rel="stylesheet">
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        cyber: {
+                            black: '#050505',
+                            dark: '#0a0a12',
+                            slate: '#1a1a2e',
+                            cyan: '#00f3ff',
+                            pink: '#ff00ff',
+                            yellow: '#fcee0a',
+                            dim: 'rgba(0, 243, 255, 0.1)'
+                        }
+                    },
+                    fontFamily: {
+                        orbitron: ['"Orbitron"', 'sans-serif'],
+                        mono: ['"Share Tech Mono"', 'monospace'],
+                    },
+                    animation: {
+                        'spin-slow': 'spin 10s linear infinite',
+                        'pulse-fast': 'pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite',
+                        'glitch': 'glitch 1s linear infinite',
+                    },
+                    boxShadow: {
+                        'neon-cyan': '0 0 5px #00f3ff, 0 0 20px rgba(0, 243, 255, 0.5)',
+                        'neon-pink': '0 0 5px #ff00ff, 0 0 20px rgba(255, 0, 255, 0.5)',
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Base Styles */
+        body {
+            background-color: #050505;
+            color: #e2e8f0;
+            font-family: 'Share Tech Mono', monospace;
+            overflow-x: hidden;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0a0a12; 
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #00f3ff; 
+            border-radius: 0px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #ff00ff; 
+        }
+
+        /* CRT Scanline Effect */
+        .scanlines::before {
+            content: " ";
+            display: block;
+            position: fixed;
+            top: 0;
+            left: 0;
+            bottom: 0;
+            right: 0;
+            background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            z-index: 50;
+            background-size: 100% 2px, 3px 100%;
+            pointer-events: none;
+        }
+
+        /* Glitch Keyframes */
+        @keyframes glitch {
+            2%, 64% { transform: translate(2px,0) skew(0deg); }
+            4%, 60% { transform: translate(-2px,0) skew(0deg); }
+            62% { transform: translate(0,0) skew(5deg); }
+        }
+        .glitch-hover:hover {
+            animation: glitch 0.3s cubic-bezier(.25, .46, .45, .94) both infinite;
+            color: #ff00ff;
+        }
+
+        /* Utilities */
+        .clip-corner {
+            clip-path: polygon(
+                0 0, 
+                100% 0, 
+                100% calc(100% - 20px), 
+                calc(100% - 20px) 100%, 
+                0 100%
+            );
+        }
+        
+        .bg-grid {
+            background-size: 50px 50px;
+            background-image: linear-gradient(to right, rgba(0, 243, 255, 0.05) 1px, transparent 1px),
+                              linear-gradient(to bottom, rgba(0, 243, 255, 0.05) 1px, transparent 1px);
+        }
+    </style>
+</head>
+<body>
+    <div id="root"></div>
+
+    <script type="text/babel">
+        const { useState, useEffect, useRef } = React;
+        const { Terminal, Code, Cpu, Zap, Mail, Github, Linkedin, Twitter, ExternalLink, ChevronsDown, Menu, X, User } = lucide;
+
+        // --- Sub-Components ---
+
+        // 1. Nav Component
+        const NavBar = () => {
+            const [isOpen, setIsOpen] = useState(false);
+            const [scrolled, setScrolled] = useState(false);
+
+            useEffect(() => {
+                const handleScroll = () => setScrolled(window.scrollY > 50);
+                window.addEventListener('scroll', handleScroll);
+                return () => window.removeEventListener('scroll', handleScroll);
+            }, []);
+
+            const navLinks = [
+                { name: 'Identity', href: '#about' },
+                { name: 'Protocols', href: '#skills' },
+                { name: 'Archives', href: '#projects' },
+                { name: 'Signal', href: '#contact' },
+            ];
+
+            return (
+                <nav className={`fixed w-full z-40 transition-all duration-300 border-b ${scrolled ? 'bg-cyber-dark/90 border-cyber-cyan/30 backdrop-blur-md py-2' : 'bg-transparent border-transparent py-4'}`}>
+                    <div className="container mx-auto px-6 flex justify-between items-center">
+                        <a href="#" className="text-2xl font-orbitron font-black text-cyber-cyan tracking-wider glitch-hover">
+                            <span className="text-cyber-pink">&lt;</span>CIPHER<span className="text-cyber-pink">/&gt;</span>
+                        </a>
+
+                        {/* Desktop Nav */}
+                        <div className="hidden md:flex space-x-8">
+                            {navLinks.map((link) => (
+                                <a key={link.name} href={link.href} className="text-gray-300 hover:text-cyber-cyan hover:shadow-neon-cyan transition-all duration-300 px-2 py-1 uppercase text-sm tracking-widest">
+                                    {link.name}
+                                </a>
+                            ))}
+                        </div>
+
+                        {/* Mobile Menu Toggle */}
+                        <button onClick={() => setIsOpen(!isOpen)} className="md:hidden text-cyber-cyan">
+                            {isOpen ? <X size={28} /> : <Menu size={28} />}
+                        </button>
+                    </div>
+
+                    {/* Mobile Nav */}
+                    {isOpen && (
+                        <div className="md:hidden absolute top-full left-0 w-full bg-cyber-dark border-b border-cyber-pink p-4 flex flex-col space-y-4">
+                            {navLinks.map((link) => (
+                                <a key={link.name} href={link.href} onClick={() => setIsOpen(false)} className="text-gray-300 hover:text-cyber-pink block border-l-2 border-transparent hover:border-cyber-pink pl-4 transition-all">
+                                    {link.name}
+                                </a>
+                            ))}
+                        </div>
+                    )}
+                </nav>
+            );
+        };
+
+        // 2. Typewriter Effect Component
+        const Typewriter = ({ text, delay = 100 }) => {
+            const [currentText, setCurrentText] = useState('');
+            const [currentIndex, setCurrentIndex] = useState(0);
+
+            useEffect(() => {
+                if (currentIndex < text.length) {
+                    const timeout = setTimeout(() => {
+                        setCurrentText(prev => prev + text[currentIndex]);
+                        setCurrentIndex(prev => prev + 1);
+                    }, delay);
+                    return () => clearTimeout(timeout);
+                }
+            }, [currentIndex, delay, text]);
+
+            return <span>{currentText}<span className="animate-pulse text-cyber-pink">_</span></span>;
+        };
+
+        // 3. Project Card
+        const ProjectCard = ({ title, desc, tech, status }) => (
+            <div className="group relative p-1 bg-gradient-to-br from-cyber-cyan to-cyber-pink clip-corner transition-transform hover:-translate-y-2 hover:z-10">
+                <div className="bg-cyber-dark h-full p-6 clip-corner flex flex-col justify-between relative overflow-hidden">
+                    {/* Decor */}
+                    <div className="absolute top-0 right-0 p-2 opacity-20 group-hover:opacity-100 transition-opacity">
+                        <Code size={48} className="text-cyber-cyan" />
+                    </div>
+                    
+                    <div>
+                        <div className="flex justify-between items-start mb-4">
+                            <h3 className="text-xl font-orbitron font-bold text-white group-hover:text-cyber-cyan transition-colors">{title}</h3>
+                            <span className={`text-xs px-2 py-1 border ${status === 'Live' ? 'border-green-500 text-green-500' : 'border-yellow-500 text-yellow-500'}`}>
+                                {status}
+                            </span>
+                        </div>
+                        <p className="text-gray-400 text-sm mb-6 leading-relaxed">{desc}</p>
+                    </div>
+
+                    <div>
+                        <div className="flex flex-wrap gap-2 mb-4">
+                            {tech.map(t => (
+                                <span key={t} className="text-xs bg-cyber-slate text-cyber-cyan px-2 py-1 border border-cyber-dim">
+                                    {t}
+                                </span>
+                            ))}
+                        </div>
+                        <div className="flex gap-4 mt-auto">
+                            <a href="#" className="flex items-center gap-1 text-sm text-gray-300 hover:text-cyber-pink transition-colors">
+                                <Github size={14} /> Code
+                            </a>
+                            <a href="#" className="flex items-center gap-1 text-sm text-gray-300 hover:text-cyber-cyan transition-colors">
+                                <ExternalLink size={14} /> Demo
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        );
+
+        // 4. Skill Bar
+        const SkillBar = ({ skill, level }) => (
+            <div className="mb-4">
+                <div className="flex justify-between text-sm mb-1 text-cyber-cyan">
+                    <span>{skill}</span>
+                    <span>{level}%</span>
+                </div>
+                <div className="h-2 bg-cyber-slate w-full border border-gray-800 relative overflow-hidden">
+                    <div 
+                        className="h-full bg-cyber-pink shadow-[0_0_10px_#ff00ff]" 
+                        style={{ width: `${level}%` }}
+                    ></div>
+                    {/* Scan effect inside bar */}
+                    <div className="absolute top-0 left-0 w-full h-full bg-gradient-to-r from-transparent via-white to-transparent opacity-20 animate-[shimmer_2s_infinite]"></div>
+                </div>
+            </div>
+        );
+
+        // --- Main App Component ---
+        const App = () => {
+            return (
+                <div className="scanlines min-h-screen selection:bg-cyber-pink selection:text-white">
+                    <NavBar />
+
+                    {/* HERO SECTION */}
+                    <header className="relative min-h-screen flex items-center justify-center bg-grid overflow-hidden pt-16">
+                        {/* Background Glows */}
+                        <div className="absolute top-1/4 left-1/4 w-64 h-64 bg-cyber-cyan rounded-full filter blur-[100px] opacity-20 animate-pulse"></div>
+                        <div className="absolute bottom-1/4 right-1/4 w-64 h-64 bg-cyber-pink rounded-full filter blur-[100px] opacity-20 animate-pulse" style={{animationDelay: '1s'}}></div>
+
+                        <div className="container mx-auto px-6 relative z-10 grid md:grid-cols-2 gap-12 items-center">
+                            <div className="order-2 md:order-1">
+                                <div className="inline-block border border-cyber-cyan bg-cyber-cyan/10 px-4 py-1 text-cyber-cyan text-xs tracking-widest mb-4">
+                                    SYSTEM ONLINE // READY
+                                </div>
+                                <h1 className="text-5xl md:text-7xl font-orbitron font-black text-white mb-6 leading-tight">
+                                    HELLO, I'M <br />
+                                    <span className="text-transparent bg-clip-text bg-gradient-to-r from-cyber-cyan to-cyber-pink filter drop-shadow-[0_0_10px_rgba(0,243,255,0.5)]">
+                                        CIPHER
+                                    </span>
+                                </h1>
+                                <div className="text-xl text-gray-400 mb-8 h-8 font-mono">
+                                    &gt; <Typewriter text="Full Stack Developer | Cyber Security Enthusiast | UI/UX Designer" delay={50} />
+                                </div>
+                                <div className="flex gap-4">
+                                    <a href="#projects" className="bg-cyber-cyan text-cyber-black font-bold px-8 py-3 clip-corner hover:bg-white hover:shadow-neon-cyan transition-all duration-300">
+                                        VIEW DATA
+                                    </a>
+                                    <a href="#contact" className="border border-cyber-pink text-cyber-pink px-8 py-3 clip-corner hover:bg-cyber-pink hover:text-black hover:shadow-neon-pink transition-all duration-300">
+                                        INITIATE COMM
+                                    </a>
+                                </div>
+                            </div>
+                            
+                            {/* Hero Image / Graphic */}
+                            <div className="order-1 md:order-2 flex justify-center relative">
+                                <div className="relative w-64 h-64 md:w-96 md:h-96">
+                                    <div className="absolute inset-0 border-2 border-cyber-cyan rounded-full animate-spin-slow opacity-50 border-dashed"></div>
+                                    <div className="absolute inset-4 border-2 border-cyber-pink rounded-full animate-spin-slow opacity-50 border-dotted" style={{animationDirection: 'reverse'}}></div>
+                                    <div className="absolute inset-0 flex items-center justify-center">
+                                        <Cpu size={120} className="text-gray-200 drop-shadow-[0_0_15px_rgba(255,255,255,0.5)]" />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <a href="#about" className="absolute bottom-10 left-1/2 -translate-x-1/2 text-cyber-cyan animate-bounce">
+                            <ChevronsDown size={32} />
+                        </a>
+                    </header>
+
+                    {/* ABOUT SECTION */}
+                    <section id="about" className="py-24 bg-cyber-black relative border-t border-gray-900">
+                        <div className="container mx-auto px-6">
+                            <div className="flex flex-col md:flex-row gap-12">
+                                {/* Terminal Window */}
+                                <div className="w-full md:w-1/2">
+                                    <div className="bg-cyber-dark border border-gray-700 rounded-t-lg overflow-hidden shadow-2xl">
+                                        <div className="bg-gray-800 px-4 py-2 flex items-center gap-2 border-b border-gray-700">
+                                            <div className="w-3 h-3 rounded-full bg-red-500"></div>
+                                            <div className="w-3 h-3 rounded-full bg-yellow-500"></div>
+                                            <div className="w-3 h-3 rounded-full bg-green-500"></div>
+                                            <span className="ml-2 text-xs text-gray-400 font-mono">user@cipher-system:~</span>
+                                        </div>
+                                        <div className="p-6 font-mono text-sm md:text-base text-gray-300 min-h-[300px]">
+                                            <p className="mb-4"><span className="text-cyber-pink">user@cipher</span>:~$ cat about_me.txt</p>
+                                            <p className="mb-4 leading-relaxed text-cyber-cyan">
+                                                &gt; Processing identity...<br/>
+                                                &gt; Access granted.
+                                            </p>
+                                            <p className="mb-4 leading-relaxed">
+                                                I construct digital experiences that merge aesthetic with functionality. Specializing in modern web technologies, I turn chaotic code into structured, beautiful interfaces.
+                                            </p>
+                                            <p className="leading-relaxed text-gray-400">
+                                                // Current Status: Available for hire<br/>
+                                                // Location: The Grid (Remote)<br/>
+                                                // Mission: Build the future
+                                            </p>
+                                            <span className="animate-pulse inline-block w-2 h-4 bg-cyber-cyan ml-1 align-middle"></span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Stats/Brief */}
+                                <div className="w-full md:w-1/2 flex flex-col justify-center">
+                                    <h2 className="text-4xl font-orbitron font-bold text-white mb-8 border-l-4 border-cyber-pink pl-4">
+                                        IDENTITY <span className="text-cyber-pink">VERIFIED</span>
+                                    </h2>
+                                    <div className="grid grid-cols-2 gap-6">
+                                        <div className="p-4 border border-gray-800 bg-cyber-dark/50 hover:border-cyber-cyan transition-colors">
+                                            <h3 className="text-3xl font-bold text-cyber-cyan mb-2">05+</h3>
+                                            <p className="text-sm text-gray-400 uppercase tracking-widest">Years Exp.</p>
+                                        </div>
+                                        <div className="p-4 border border-gray-800 bg-cyber-dark/50 hover:border-cyber-pink transition-colors">
+                                            <h3 className="text-3xl font-bold text-cyber-pink mb-2">50+</h3>
+                                            <p className="text-sm text-gray-400 uppercase tracking-widest">Projects</p>
+                                        </div>
+                                        <div className="p-4 border border-gray-800 bg-cyber-dark/50 hover:border-cyber-yellow transition-colors">
+                                            <h3 className="text-3xl font-bold text-cyber-yellow mb-2">24/7</h3>
+                                            <p className="text-sm text-gray-400 uppercase tracking-widest">Uptime</p>
+                                        </div>
+                                        <div className="p-4 border border-gray-800 bg-cyber-dark/50 hover:border-white transition-colors">
+                                            <h3 className="text-3xl font-bold text-white mb-2">100%</h3>
+                                            <p className="text-sm text-gray-400 uppercase tracking-widest">Commitment</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* SKILLS SECTION */}
+                    <section id="skills" className="py-24 bg-cyber-dark bg-grid">
+                        <div className="container mx-auto px-6">
+                            <h2 className="text-4xl font-orbitron font-bold text-center text-white mb-16">
+                                SYSTEM <span className="text-cyber-cyan">PROTOCOLS</span>
+                            </h2>
+                            
+                            <div className="grid md:grid-cols-2 gap-12 max-w-4xl mx-auto">
+                                <div>
+                                    <h3 className="text-xl text-cyber-pink mb-6 flex items-center gap-2">
+                                        <Zap size={20} /> FRONTEND_MODULE
+                                    </h3>
+                                    <div className="space-y-6">
+                                        <SkillBar skill="React / Next.js" level={95} />
+                                        <SkillBar skill="Tailwind CSS" level={90} />
+                                        <SkillBar skill="TypeScript" level={85} />
+                                        <SkillBar skill="Three.js" level={70} />
+                                    </div>
+                                </div>
+                                <div>
+                                    <h3 className="text-xl text-cyber-cyan mb-6 flex items-center gap-2">
+                                        <Terminal size={20} /> BACKEND_MODULE
+                                    </h3>
+                                    <div className="space-y-6">
+                                        <SkillBar skill="Node.js / Express" level={90} />
+                                        <SkillBar skill="Python / Django" level={80} />
+                                        <SkillBar skill="PostgreSQL / MongoDB" level={85} />
+                                        <SkillBar skill="Docker / AWS" level={75} />
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* PROJECTS SECTION */}
+                    <section id="projects" className="py-24 bg-cyber-black relative">
+                        <div className="container mx-auto px-6">
+                            <div className="flex justify-between items-end mb-16 border-b border-gray-800 pb-4">
+                                <h2 className="text-4xl font-orbitron font-bold text-white">
+                                    PROJECT <span className="text-cyber-yellow">ARCHIVES</span>
+                                </h2>
+                                <span className="hidden md:block text-gray-500 font-mono text-sm">Loading data chunks... Complete.</span>
+                            </div>
+
+                            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                <ProjectCard 
+                                    title="Neon Commerce" 
+                                    desc="A futuristic e-commerce dashboard with real-time analytics and crypto integration."
+                                    tech={['React', 'Redux', 'Tailwind']}
+                                    status="Live"
+                                />
+                                <ProjectCard 
+                                    title="CyberChat App" 
+                                    desc="End-to-end encrypted messaging platform with self-destructing messages."
+                                    tech={['Socket.io', 'Node', 'Mongo']}
+                                    status="Beta"
+                                />
+                                <ProjectCard 
+                                    title="AI Sentinel" 
+                                    desc="Computer vision security system using machine learning models."
+                                    tech={['Python', 'TensorFlow', 'OpenCV']}
+                                    status="Prototype"
+                                />
+                                <ProjectCard 
+                                    title="Holo-Portfolio" 
+                                    desc="3D personal website featuring WebGL interactive elements."
+                                    tech={['Three.js', 'WebGL', 'GSAP']}
+                                    status="Live"
+                                />
+                            </div>
+                        </div>
+                    </section>
+
+                    {/* CONTACT SECTION */}
+                    <section id="contact" className="py-24 bg-cyber-dark relative overflow-hidden">
+                         {/* Decor lines */}
+                         <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-cyber-cyan via-cyber-pink to-cyber-yellow"></div>
+                         
+                        <div className="container mx-auto px-6 relative z-10">
+                            <div className="max-w-3xl mx-auto text-center mb-12">
+                                <h2 className="text-4xl font-orbitron font-bold text-white mb-4">
+                                    ESTABLISH <span className="text-cyber-pink">CONNECTION</span>
+                                </h2>
+                                <p className="text-gray-400">
+                                    Transmission channels are open. Send a signal for collaboration, freelance inquiries, or just to say hello.
+                                </p>
+                            </div>
+
+                            <div className="grid md:grid-cols-3 gap-8 max-w-5xl mx-auto">
+                                {/* Contact Info */}
+                                <div className="md:col-span-1 space-y-6">
+                                    <div className="p-6 bg-cyber-slate border border-gray-800 hover:border-cyber-cyan transition-colors group">
+                                        <Mail className="text-cyber-cyan mb-4 group-hover:scale-110 transition-transform" size={32} />
+                                        <h4 className="text-white font-bold mb-1">Email Protocol</h4>
+                                        <p className="text-gray-400 text-sm">hello@cipher.dev</p>
+                                    </div>
+                                    <div className="p-6 bg-cyber-slate border border-gray-800 hover:border-cyber-pink transition-colors group">
+                                        <div className="flex gap-4 justify-center md:justify-start">
+                                            <a href="#" className="text-gray-400 hover:text-white hover:shadow-neon-cyan p-2 rounded-full transition-all"><Github /></a>
+                                            <a href="#" className="text-gray-400 hover:text-white hover:shadow-neon-pink p-2 rounded-full transition-all"><Linkedin /></a>
+                                            <a href="#" className="text-gray-400 hover:text-white hover:shadow-neon-cyan p-2 rounded-full transition-all"><Twitter /></a>
+                                        </div>
+                                        <h4 className="text-white font-bold mt-4">Social Uplinks</h4>
+                                    </div>
+                                </div>
+
+                                {/* Form */}
+                                <div className="md:col-span-2 bg-cyber-slate p-8 border border-gray-800 relative clip-corner">
+                                    <div className="absolute top-0 right-0 w-16 h-16 border-t-2 border-r-2 border-cyber-cyan"></div>
+                                    <div className="absolute bottom-0 left-0 w-16 h-16 border-b-2 border-l-2 border-cyber-pink"></div>
+                                    
+                                    <form onSubmit={(e) => e.preventDefault()} className="space-y-6">
+                                        <div className="grid md:grid-cols-2 gap-6">
+                                            <div className="space-y-2">
+                                                <label className="text-xs text-cyber-cyan uppercase tracking-widest">Identifier / Name</label>
+                                                <input type="text" className="w-full bg-cyber-dark border border-gray-700 text-white p-3 focus:border-cyber-cyan focus:outline-none focus:shadow-neon-cyan transition-all" placeholder="Enter Name" />
+                                            </div>
+                                            <div className="space-y-2">
+                                                <label className="text-xs text-cyber-pink uppercase tracking-widest">Frequency / Email</label>
+                                                <input type="email" className="w-full bg-cyber-dark border border-gray-700 text-white p-3 focus:border-cyber-pink focus:outline-none focus:shadow-neon-pink transition-all" placeholder="Enter Email" />
+                                            </div>
+                                        </div>
+                                        <div className="space-y-2">
+                                            <label className="text-xs text-cyber-yellow uppercase tracking-widest">Transmission / Message</label>
+                                            <textarea rows="4" className="w-full bg-cyber-dark border border-gray-700 text-white p-3 focus:border-cyber-yellow focus:outline-none transition-all" placeholder="Enter your message..."></textarea>
+                                        </div>
+                                        <button className="w-full bg-transparent border border-cyber-cyan text-cyber-cyan font-bold py-4 hover:bg-cyber-cyan hover:text-black hover:shadow-neon-cyan transition-all uppercase tracking-widest">
+                                            Send Transmission
+                                        </button>
+                                    </form>
+                                </div>
+                            </div>
+                        </div>
+                    </section>
+
+                    <footer className="bg-black py-8 border-t border-gray-900 text-center">
+                        <p className="text-gray-600 text-sm font-mono">
+                            &copy; 2024 CIPHER SYSTEMS. ALL RIGHTS RESERVED. <br/>
+                            <span className="text-xs opacity-50">System Build v4.2.0</span>
+                        </p>
+                    </footer>
+                </div>
+            );
+        };
+
+        const root = ReactDOM.createRoot(document.getElementById('root'));
+        root.render(<App />);
+    </script>
+</body>
+</html>

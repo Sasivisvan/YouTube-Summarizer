@@ -1,0 +1,422 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>YouTube Summarizer — Home</title>
+    
+    <style>
+        :root {
+            --max-width: 900px;
+            --accent: #ff4757;
+            --muted: #6b7280
+        }
+
+        body {
+            font-family: Inter, Segoe UI, Roboto, Arial, sans-serif;
+            margin: 0;
+            padding: 24px;
+            background: #f7fafc;
+            color: #0f172a
+        }
+
+        .container {
+            max-width: var(--max-width);
+            margin: 0 auto;
+            background: #fff;
+            padding: 24px;
+            border-radius: 12px;
+            box-shadow: 0 6px 20px rgba(15, 23, 42, 0.06)
+        }
+
+        h1 {
+            margin: 0 0 8px;
+            font-size: 1.5rem
+        }
+
+        p.lead {
+            margin: 0 0 18px;
+            color: var(--muted)
+        }
+
+        form .row {
+            display: flex;
+            gap: 12px;
+            align-items: center
+        }
+
+        input[type=text] {
+            flex: 1;
+            padding: 10px 12px;
+            border: 1px solid #e6e9ee;
+            border-radius: 8px;
+            font-size: 0.95rem
+        }
+
+        .btn {
+            background: var(--accent);
+            color: #fff;
+            padding: 10px 14px;
+            border-radius: 8px;
+            border: 0;
+            cursor: pointer
+        }
+
+        .options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+            gap: 10px;
+            margin-top: 18px
+        }
+
+        .option {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 10px;
+            border: 1px solid #eef2f7;
+            border-radius: 8px
+        }
+
+        .option label {
+            font-weight: 600
+        }
+
+        .muted {
+            color: var(--muted);
+            font-size: 0.9rem
+        }
+
+        #results {
+            margin-top: 18px;
+            padding: 14px;
+            border-radius: 8px;
+            background: #fcfcff;
+            border: 1px dashed #e9eef8;
+            min-height: 80px
+        }
+
+        .flex {
+            display: flex;
+            gap: 8px;
+            align-items: center
+        }
+
+        @media (max-width:520px) {
+            .row {
+                flex-direction: column;
+                align-items: stretch
+            }
+        }
+
+        .quiz-container {
+            display: flex;
+            flex-direction: column;
+            gap: 18px;
+            margin-top: 12px;
+        }
+
+        .quiz-card {
+            padding: 16px;
+            border-radius: 12px;
+            border: 1px solid #ddd;
+            background: #fafafa;
+            transition: 0.3s;
+        }
+
+        .quiz-card:hover {
+            box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+        }
+
+        .quiz-question {
+            margin: 0 0 10px;
+            font-size: 1rem;
+        }
+
+        .quiz-options {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .quiz-option {
+            padding: 10px;
+            border-radius: 8px;
+            border: 1px solid #ccc;
+            background: white;
+            text-align: left;
+            cursor: pointer;
+            font-size: 0.95rem;
+            transition: 0.2s;
+        }
+
+        .quiz-option:hover {
+            background: #f3f3f3;
+        }
+
+        .quiz-option.correct {
+            border-color: #2ecc71;
+            background: #eafaf0;
+        }
+
+        .quiz-option.wrong {
+            border-color: #e74c3c;
+            background: #fdecea;
+        }
+
+        .quiz-explanation {
+            display: none;
+            margin-top: 12px;
+            padding: 10px;
+            background: #eef7ff;
+            border-left: 4px solid #3498db;
+            border-radius: 6px;
+            font-size: 0.9rem;
+        }
+    </style>
+</head>
+
+<body>
+    <main class="container" id="main">
+        <h1>YouTube Summarizer</h1>
+        <p class="lead">Paste a YouTube link below and choose the outputs you want. This app will fetch the transcript
+            and produce the selected artifacts.</p>
+
+        <form id="summarize-form" aria-labelledby="form-heading">
+            <div class="row">
+                <label for="ytUrl" class="sr-only">YouTube URL</label>
+                <input id="ytUrl" name="ytUrl" type="text"
+                    placeholder="https://www.youtube.com/watch?v=... or youtu.be/..." aria-label="YouTube URL"
+                    required />
+                <button type="submit" class="btn" id="submitBtn">Go!</button>
+            </div>
+
+            <fieldset style="border:none;margin:0;padding:0;margin-top:12px">
+                <legend class="muted">Choose outputs (select multiple)</legend>
+
+                <div class="options" role="group" aria-label="Summarizer output options">
+
+                    <div class="option">
+                        <input type="checkbox" id="opt-detailed" name="outputs" value="detailed" checked>
+                        <label for="opt-detailed">Detailed notes</label>
+                    </div>
+
+                    <div class="option">
+                        <input type="checkbox" id="opt-summary" name="outputs" value="summary" checked>
+                        <label for="opt-summary">Short summary</label>
+                    </div>
+
+                    <div class="option">
+                        <input type="checkbox" id="opt-quiz" name="outputs" value="quiz">
+                        <label for="opt-quiz">Quizzes / questions</label>
+                    </div>
+
+                    <!-- Hidden until quiz is checked -->
+                    <div class="option" id="quiz-count-container" style="display:none; margin-left: 24px;">
+                        <label for="quiz-count" class="muted">Number of questions:</label>
+                        <select id="noOfQuestions" name="noOfQuestions">
+                            <option value="5">5 questions</option>
+                            <option value="10">10 questions</option>
+                            <option value="15">15 questions</option>
+                            <option value="20">20 questions</option>
+                            <option value="25">25 questions</option>
+                        </select>
+                    </div>
+
+                    <div class="option">
+                        <input type="checkbox" id="opt-flash" name="outputs" value="flashcards">
+                        <label for="opt-flash">Flashcards</label>
+                    </div>
+
+                </div>
+            </fieldset>
+
+        </form>
+
+        <div id="results" aria-live="polite">No results yet. Paste a YouTube link and click Summarize.</div>
+    </main>
+
+    <script>
+        document.getElementById("opt-quiz").addEventListener("change", function () {
+            const container = document.getElementById("quiz-count-container");
+            container.style.display = this.checked ? "block" : "none";
+        });
+
+        // Simple client-side behavior: validate URL, collect options, POST to /api/summarize
+        const form = document.getElementById('summarize-form');
+        const ytUrlInput = document.getElementById('ytUrl');
+        const results = document.getElementById('results');
+        const submitBtn = document.getElementById('submitBtn');
+
+        function isYoutubeUrl(url) {
+            try {
+                const u = new URL(url);
+                return /(^|\.)youtube\.com$/.test(u.hostname) || /(^|\.)youtu\.be$/.test(u.hostname);
+            } catch (e) {
+                return false;
+            }
+        }
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const url = ytUrlInput.value.trim();
+            if (!url) { results.textContent = 'Please paste a YouTube URL.'; return; }
+            if (!isYoutubeUrl(url)) { results.textContent = 'That does not look like a YouTube URL.'; return; }
+
+            // collect outputs
+            const outputs = Array.from(document.querySelectorAll('input[name="outputs"]:checked')).map(cb => cb.value);
+            if (outputs.length === 0) { results.textContent = 'Select at least one output option.'; return; }
+            // collect noOfQuestions if quizz is checked
+            let noOfQuestions = null;
+
+            // If quiz output is selected, read the quizCount dropdown
+            if (outputs.includes("quiz")) {
+                const countEl = document.getElementById("noOfQuestions");
+                noOfQuestions = countEl ? countEl.value : null;
+            }
+            submitBtn.disabled = true; submitBtn.textContent = 'Working...';
+            results.textContent = 'Sending request…';
+
+            try {
+                const resp = await fetch('/api/summarize', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ url, outputs, noOfQuestions })
+                });
+
+                if (!resp.ok) {
+                    const text = await resp.text();
+                    results.textContent = 'Server error: ' + (text || resp.status);
+                } else {
+                    const data = await resp.json();
+                    // For now, backend returns a simple object; render it nicely
+                    renderResults(data);
+                }
+            } catch (err) {
+                results.textContent = 'Network error: ' + err.message;
+            } finally {
+                submitBtn.disabled = false; submitBtn.textContent = 'Summarize';
+            }
+        });
+
+
+        function QuizToHTML(quizList) {
+            if (!Array.isArray(quizList) || quizList.length === 0) {
+                return `<p class="muted">No quiz questions available.</p>`;
+            }
+
+            return `
+    <div class="quiz-container">
+        ${quizList
+                    .map(
+                        (q, index) => `
+            <div class="quiz-card">
+                <h3 class="quiz-question">${index + 1}. ${q.question}</h3>
+
+                <div class="quiz-options">
+                    ${q.options
+                                .map(
+                                    (opt, i) => `
+                        <button class="quiz-option" data-is-correct="${q.answer === i + 1}" onclick="handleQuizClick(this)">
+                            ${opt}
+                        </button>
+                    `
+                                )
+                                .join("")}
+                </div>
+
+                <div class="quiz-explanation">
+                    <strong>Explanation:</strong> ${q.explanation}
+                </div>
+            </div>
+        `
+                    )
+                    .join("")}
+    </div>
+    `;
+        }
+
+
+        function renderResults(data) {
+            // Expected: { url, outputs: { summary: '...', detailed: '...', quiz: [...], flashcards: ... } }
+            results.innerHTML = '';
+
+            // Header
+            const h = document.createElement('div');
+            h.style.marginBottom = '8px';
+            h.innerHTML = '<strong>Results for:</strong> ' + (data.url || '');
+            results.appendChild(h);
+
+            const outs = data.outputs || {};
+
+            for (const key of Object.keys(outs)) {
+                const section = document.createElement('section');
+                section.style.marginBottom = '16px';
+
+                const title = document.createElement('h3');
+                title.style.margin = '0 0 6px';
+                title.style.fontSize = '1rem';
+                title.textContent = niceName(key);
+                section.appendChild(title);
+
+                const content = document.createElement('div');
+                content.className = 'muted';
+
+                // --- SPECIAL HANDLING FOR QUIZ ---
+                if (key === "quiz") {
+                    try {
+                        content.innerHTML = QuizToHTML(outs[key]);
+                    } catch (e) {
+                        console.error("Quiz render failed:", e);
+                        content.textContent = "Failed to render quiz.";
+                    }
+                }
+                // --- NORMAL HTML OUTPUTS ---
+                else if (typeof outs[key] === "string") {
+                    content.innerHTML = outs[key];
+                }
+                // --- FALLBACK FOR OTHER TYPES ---
+                else {
+                    content.textContent = JSON.stringify(outs[key], null, 2);
+                }
+
+                section.appendChild(content);
+                results.appendChild(section);
+            }
+        }
+
+
+        function niceName(k) {
+            return ({ detailed: 'Detailed notes', summary: 'Short summary', quiz: 'Quizzes', keypoints: 'Key takeaways', timestamps: 'Timestamps', flashcards: 'Flashcards' }[k] || k);
+        }
+
+        window.handleQuizClick = function (btn) {
+            const parent = btn.closest(".quiz-card");
+            const options = parent.querySelectorAll(".quiz-option");
+            const explanation = parent.querySelector(".quiz-explanation");
+
+            // Disable all buttons after answering:
+            options.forEach(o => (o.disabled = true));
+
+            const correct = btn.dataset.isCorrect === "true";
+
+            if (correct) {
+                btn.classList.add("correct");
+            } else {
+                btn.classList.add("wrong");
+                // Highlight correct option
+                options.forEach(o => {
+                    if (o.dataset.isCorrect === "true") {
+                        o.classList.add("correct");
+                    }
+                });
+            }
+
+            explanation.style.display = "block";
+        };
+
+    </script>
+</body>
+
+</html>
